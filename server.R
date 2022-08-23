@@ -65,7 +65,7 @@ server <- function(input, output, session) {
   codon_to_aa$... <- Biostrings::AMINO_ACID_CODE[codon_to_aa$.]
   codon_to_aa[is.na(codon_to_aa)] <- '*'
   updateSelectizeInput(session, 'species', choices = levels(factor(sp_id)), selected = "Escherichia coli K-12 [Taxid:83333]", server = TRUE)
-  
+
   df <- eventReactive(eventExpr = input$all_species, valueExpr = {
     if (input$all_species) {
       if (!exists("df_full")) {
@@ -147,10 +147,10 @@ server <- function(input, output, session) {
         xlab('Codon') +
         # scale_fill_manual(values = unname(pals::polychrome())) +
         theme_bw() +
-        theme(axis.title = element_text(size = 14, face = "bold"),
-              axis.text = element_text(size = 13),
-              axis.text.x = element_text(size = 12, angle = 45, vjust = .85, hjust = .85),
-              strip.text = element_text(size = 14))
+        theme(axis.title = element_text(size = s_f_d() * 19, face = "bold"),
+              axis.text = element_text(size = s_f_d() * 16),
+              axis.text.x = element_text(size = s_f_d() * 13, angle = 45, vjust = .85, hjust = .85),
+              strip.text = element_text(size = s_f_d() * 14.5))
       
       if (input$by_aa) {
         p <- p + 
@@ -162,79 +162,92 @@ server <- function(input, output, session) {
     }
   })
   
+  # get screen resolution to adjust font sizes by a factor
+  s_f <- eventReactive(input$dimension,{
+    input$dimension[1] / 2500
+  })
+  
+  # prevent graph from being redrawn many times if user resizes window
+  s_f_d <- debounce(s_f, 1000)
+  
   output$plotsun <- renderPlot({
-    ggplot(nucdf, aes(x = x, y = y)) +
-      # 3' big black points in the background
-      geom_point(data = NULL, x = 0.5, y= 3.4, size = 20, color = 'black', shape = 16) + 
-      geom_point(data = NULL, x = 48.5, y= 3.4, size = 20, color = 'black', shape = 16) +
-      geom_point(data = NULL, x = 96.5, y= 3.4, size = 20, color = 'black', shape = 16) +
-      geom_point(data = NULL, x = 144.5, y= 3.4, size = 20, color = 'black', shape = 16) +
-      
-      # AA tiles are the outermost ring
-      geom_tile(data = nucdf[129:192,], aes(y = y + 0.24, height = h + 0.3, fill = aa), color = 'transparent', size = 0, show.legend = FALSE) +
-      geom_vline(xintercept = c(2,4,8,10,12,14,15,16,20,24,26,28,32,35,36,40,42,44,46,48,52,56,58,60,64,66,68,72,74,76,78,79,80,84,88,90,92,96,99,100,104,106,108,110,
-                                112,116,120,122,124,128,130,132,136,138,140,142,143,144,148,152,154,156,160,163,164,168,170,172,174,176,180,184,186,188,192) + 0.5,
-                 linetype = 1, size = 0.3, color = "black") +
-      
-      # first Nuc tiles are the outer ring
-      geom_tile(data = nucdf[129:192,], aes(height = h, fill = nuc3), color = 'black', size = 0.5, show.legend = FALSE) +
-      geom_vline(xintercept = seq(4,64, 4) + 0.5, linetype = 1, size = 1.1, color = "black") +
-      
-      
-      # second tiles are the middle ring
-      geom_tile(data = nucdf[65:128,], aes(height = h, fill = nuc2, color = nuc2), size = 1,  show.legend = FALSE) +
-      geom_vline(xintercept = seq(4,66, 4) + 0.5,linetype = 1, size = 1.1, color = "black") +
-      
-      # third tiles are the inner ring
-      geom_tile(data = nucdf[1:64,], aes(height = h, fill = nuc, color = nuc), size = 1, show.legend = FALSE) +
-      geom_vline(xintercept = c(0.5, 96.5, 48.5, 144.5), linetype = 1, size = 1.4, color = "black") +
-      
-      # thin line to separate same amino acids across the entire chart
-      geom_vline(xintercept = c(2,4,8,10,12,14,15,16,20,24,26,28,32,35,36,40,42,44,46,48,52,56,58,60,64,66,68,72,74,76,78,79,80,84,88,90,92,96,99,100,104,106,108,110,
-                                112,116,120,122,124,128,130,132,136,138,140,142,143,144,148,152,154,156,160,163,164,168,170,172,174,176,180,184,186,188,192) + 0.5, 
-                 linetype = 1, size = 0.3, color = "black", alpha =0.06) +
-      
-      # border around amino acid ring
-      geom_hline(yintercept = c(3,3.4), size = 1, color = 'black') +
-      geom_textvline(aes(xintercept = as.numeric(x)), label = rep(unname(gcode[codons]),3), hjust = 0.975,
-                     linetype = 0, color = "black", family = 'mono', fontface = 'bold') +
-      
-      # 5' big black point, and label 5' and 3' points
-      geom_point(data = NULL, x = 0, y= -1, size = 20, color = 'black') +
-      geom_text(data = NULL, aes(label = "3'"), x = 0.5, y= 3.4, size = 6, color = 'white', vjust = -0.3) + 
-      geom_text(data = NULL, aes(label = "3'"), x = 48.5, y= 3.4, size = 6, color = 'white', hjust = 1.3) + 
-      geom_text(data = NULL, aes(label = "3'"), x = 96.5, y= 3.4, size = 6, color = 'white', vjust = 1.3) + 
-      geom_text(data = NULL, aes(label = "3'"), x = 144.5, y= 3.4, size = 6, color = 'white', hjust = -0.3) + 
-      geom_text(data = NULL, x = 0, y= -1, label = "5'",  size = 8, color = 'white') +
-      
-      # labels for the nuc rings
-      geom_text(data = nucdf[129:192,], mapping = aes(label = nuc), size = 6, fontface = 'bold') +
-      geom_text(data = nucdf[seq(66, 126,length.out = 16),], mapping = aes(y= y, label = nuc), size = 15, fontface = 'bold') +
-      geom_text(data = nucdf[c(8,24,40,56),], mapping = aes(y= y, label = nuc), size = 22, fontface = 'bold') +
-      
-      # axis
-      coord_polar() +
-      scale_y_continuous(limits = c(-1, 3.4)) +
-      
-      # colors
-      scale_fill_manual(values = c("A" = input$g, "T" = input$h, "C" = input$i, "G" = input$j,
-                                   "A1" = '#B97FFF', "T1" = '#FF75BC', "C1" = '#6BA9FF', "G1" = '#90FF8A',
-                                   "A2" = '#D3ADFF', "T2" = '#FFADD6', "C2" = '#9CC5FF', "G2" = '#C0FFBD',
-                                   'Phe'="grey55",'Leu'="grey70",'Ser'="green",'Tyr'="#ADBDAC",'STP'="white",
-                                   'Cys'="#F4FC9F",'Trp'="grey50",'Pro'="grey70",'His'="#7759EB",'Gln'="#BEFFB2",
-                                   'Arg'="blue",'Ile'="grey70",'Met'="#D4D6B4",'Thr'="#81FF6B",'Asn'="#95FF82",
-                                   'Lys'="#5F57FF",'Val'="grey80",'Ala'="grey88",'Asp'="#FF5454",'Glu'="red",'Gly'="grey95")) +
-      
-      scale_color_manual(values = c("A" = input$g, "T" = input$h, "C" = input$i, "G" = input$j,
-                                    "A1" = '#B97FFF', "T1" = '#FF75BC', "C1" = '#6BA9FF', "G1" = '#90FF8A',
-                                    "A2" = '#D3ADFF', "T2" = '#FFADD6', "C2" = '#9CC5FF', "G2" = '#C0FFBD')) +
-      theme(axis.ticks = element_blank(), axis.text = element_blank(),
-            axis.title.y = element_blank(), axis.title.x = element_blank(),
-            panel.border = element_blank(), panel.grid.major = element_blank(),
-            rect = element_rect(fill = "transparent"),
-            panel.background = element_rect(fill = "transparent",colour = NA),
-            plot.background = element_rect(fill = "transparent",colour = NA),
-            plot.margin = margin(-2,-2,-2,-2, "cm"))
+    if (!identical(s_f_d(), numeric(0))) {
+  
+      ggplot(nucdf, aes(x = x, y = y)) +
+        # 3' big black points in the background
+        geom_point(data = NULL, x = 0.5, y= 3.4, size = s_f_d() * 20, color = 'black', shape = 16) + 
+        geom_point(data = NULL, x = 48.5, y= 3.4, size = s_f_d() * 20, color = 'black', shape = 16) +
+        geom_point(data = NULL, x = 96.5, y= 3.4, size = s_f_d() * 20, color = 'black', shape = 16) +
+        geom_point(data = NULL, x = 144.5, y= 3.4, size = s_f_d() * 20, color = 'black', shape = 16) +
+        
+        # AA tiles are the outermost ring
+        geom_tile(data = nucdf[129:192,], aes(y = y + 0.24, height = h + 0.3, fill = aa), color = 'transparent', size = 0, show.legend = FALSE) +
+        geom_vline(xintercept = c(2,4,8,10,12,14,15,16,20,24,26,28,32,35,36,40,42,44,46,48,52,56,58,60,64,66,68,72,74,76,78,79,80,84,88,90,92,96,99,100,104,106,108,110,
+                                  112,116,120,122,124,128,130,132,136,138,140,142,143,144,148,152,154,156,160,163,164,168,170,172,174,176,180,184,186,188,192) + 0.5,
+                   linetype = 1, size = 0.3, color = "black") +
+        
+        # first Nuc tiles are the outer ring
+        geom_tile(data = nucdf[129:192,], aes(height = h, fill = nuc3), color = 'black', size = 0.5, show.legend = FALSE) +
+        geom_vline(xintercept = seq(4,64, 4) + 0.5, linetype = 1, size = 1.1, color = "black") +
+        
+        
+        # second tiles are the middle ring
+        geom_tile(data = nucdf[65:128,], aes(height = h, fill = nuc2, color = nuc2), size = 1,  show.legend = FALSE) +
+        geom_vline(xintercept = seq(4,66, 4) + 0.5,linetype = 1, size = 1.1, color = "black") +
+        
+        # third tiles are the inner ring
+        geom_tile(data = nucdf[1:64,], aes(height = h, fill = nuc, color = nuc), size = 1, show.legend = FALSE) +
+        geom_vline(xintercept = c(0.5, 96.5, 48.5, 144.5), linetype = 1, size = 1.4, color = "black") +
+        
+        # thin line to separate same amino acids across the entire chart
+        geom_vline(xintercept = c(2,4,8,10,12,14,15,16,20,24,26,28,32,35,36,40,42,44,46,48,52,56,58,60,64,66,68,72,74,76,78,79,80,84,88,90,92,96,99,100,104,106,108,110,
+                                  112,116,120,122,124,128,130,132,136,138,140,142,143,144,148,152,154,156,160,163,164,168,170,172,174,176,180,184,186,188,192) + 0.5, 
+                   linetype = 1, size = 0.3, color = "black", alpha =0.06) +
+        
+        # border around amino acid ring
+        geom_hline(yintercept = c(3,3.4), size = 1, color = 'black') +
+        
+        # amino acid radial text
+        geom_textvline(aes(xintercept = as.numeric(x)), label = rep(unname(gcode[codons]),3), hjust = 0.975 + (s_f_d() * 0.02),
+                       linetype = 0, color = "black", family = 'mono', fontface = 'bold', size = 4 * s_f_d()) +
+        
+        # 5' big black point, and label 5' and 3' points
+        geom_point(data = NULL, x = 0, y= -1, size = s_f_d() * 20, color = 'black') +
+        geom_text(data = NULL, aes(label = "3'"), x = 0.5, y= 3.4, size = s_f_d() * 6, color = 'white', vjust = -0.3) + 
+        geom_text(data = NULL, aes(label = "3'"), x = 48.5, y= 3.4, size = s_f_d() * 6, color = 'white', hjust = 1.3) + 
+        geom_text(data = NULL, aes(label = "3'"), x = 96.5, y= 3.4, size = s_f_d() * 6, color = 'white', vjust = 1.3) + 
+        geom_text(data = NULL, aes(label = "3'"), x = 144.5, y= 3.4, size = s_f_d() * 6, color = 'white', hjust = -0.3) + 
+        geom_text(data = NULL, x = 0, y= -1, label = "5'",  size = s_f_d() * 8, color = 'white') +
+        
+        # labels for the nuc rings
+        geom_text(data = nucdf[129:192,], mapping = aes(label = nuc), size = s_f_d() * 6, fontface = 'bold') +
+        geom_text(data = nucdf[seq(66, 126,length.out = 16),], mapping = aes(y= y, label = nuc), size = s_f_d() * 15, fontface = 'bold') +
+        geom_text(data = nucdf[c(8,24,40,56),], mapping = aes(y= y, label = nuc), size = s_f_d() * 22, fontface = 'bold') +
+        
+        # axis
+        coord_polar() +
+        scale_y_continuous(limits = c(-1, 3.4)) +
+        
+        # colors
+        scale_fill_manual(values = c("A" = input$g, "T" = input$h, "C" = input$i, "G" = input$j,
+                                     "A1" = '#B97FFF', "T1" = '#FF75BC', "C1" = '#6BA9FF', "G1" = '#90FF8A',
+                                     "A2" = '#D3ADFF', "T2" = '#FFADD6', "C2" = '#9CC5FF', "G2" = '#C0FFBD',
+                                     'Phe'="grey55",'Leu'="grey70",'Ser'="green",'Tyr'="#ADBDAC",'STP'="white",
+                                     'Cys'="#F4FC9F",'Trp'="grey50",'Pro'="grey70",'His'="#7759EB",'Gln'="#BEFFB2",
+                                     'Arg'="blue",'Ile'="grey70",'Met'="#D4D6B4",'Thr'="#81FF6B",'Asn'="#95FF82",
+                                     'Lys'="#5F57FF",'Val'="grey80",'Ala'="grey88",'Asp'="#FF5454",'Glu'="red",'Gly'="grey95")) +
+        
+        scale_color_manual(values = c("A" = input$g, "T" = input$h, "C" = input$i, "G" = input$j,
+                                      "A1" = '#B97FFF', "T1" = '#FF75BC', "C1" = '#6BA9FF', "G1" = '#90FF8A',
+                                      "A2" = '#D3ADFF', "T2" = '#FFADD6', "C2" = '#9CC5FF', "G2" = '#C0FFBD')) +
+        theme(axis.ticks = element_blank(), axis.text = element_blank(),
+              axis.title.y = element_blank(), axis.title.x = element_blank(),
+              panel.border = element_blank(), panel.grid.major = element_blank(),
+              rect = element_rect(fill = "transparent"),
+              panel.background = element_rect(fill = "transparent",colour = NA),
+              plot.background = element_rect(fill = "transparent",colour = NA),
+              plot.margin = margin(s_f_d() * -1.8,s_f_d() * -1.8,s_f_d() * -1.8,s_f_d() * -1.8, "cm"))
+    }
   }, bg="transparent")
   
 }

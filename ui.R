@@ -12,6 +12,17 @@ ui <- fluidPage(
     position = 'right',
     sidebarPanel(
       width = 4,
+      tags$head(tags$script('var dimension = [0, 0];
+                                $(document).on("shiny:connected", function(e) {
+                                    dimension[0] = window.innerWidth;
+                                    dimension[1] = window.innerHeight;
+                                    Shiny.onInputChange("dimension", dimension);
+                                });
+                                $(window).resize(function(e) {
+                                    dimension[0] = window.innerWidth;
+                                    dimension[1] = window.innerHeight;
+                                    Shiny.onInputChange("dimension", dimension);
+                                });')),
       fluidRow(column(12, HTML('<h3>Genetic code sun</h3>'))), 
       HTML('<hr style="margin: 0 0 10px" />'),
       fluidRow(
