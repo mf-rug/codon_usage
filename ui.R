@@ -4,6 +4,7 @@ library(DT)
 library(colourpicker)
 library(geomtextpath)
 library(shinyWidgets)
+library(ggnewscale)
 
 ui <- fluidPage(
   title = 'Codon Usage tables',
@@ -26,12 +27,14 @@ ui <- fluidPage(
       fluidRow(column(12, HTML('<h3>Genetic code sun</h3>'))), 
       HTML('<hr style="margin: 0 0 10px" />'),
       fluidRow(
-        column(3, colourInput('g','color A', value = '#9640FF',  closeOnClick = TRUE)),
-        column(3, colourInput('h','color T', value = '#FF389F', closeOnClick = TRUE)),
-        column(3, colourInput('i','color C', value = '#2B87FF', closeOnClick = TRUE)),
-        column(3, colourInput('j','color G', value = '#5FFF54', closeOnClick = TRUE))
+        column(3, colourInput('g','Color A', value = '#9640FF',  closeOnClick = TRUE)),
+        column(3, colourInput('h','Color T', value = '#FF389F', closeOnClick = TRUE)),
+        column(3, colourInput('i','Color C', value = '#2B87FF', closeOnClick = TRUE)),
+        column(3, colourInput('j','Color G', value = '#5FFF54', closeOnClick = TRUE))
       ),
-      plotOutput('plotsun', height = '80vh')
+      radioGroupButtons('byaa', 'Color amino acid by', status = 'primary',
+                        choices = c('AA property', 'Codon Frequency'), selected = 'AA property'),
+      plotOutput('plotsun', height = '60vh')
     ),
     mainPanel(
       width = 8,

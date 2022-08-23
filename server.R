@@ -172,16 +172,30 @@ server <- function(input, output, session) {
   
   output$plotsun <- renderPlot({
     if (!identical(s_f_d(), numeric(0))) {
-  
-      ggplot(nucdf, aes(x = x, y = y)) +
+      nucdf$cods <- codons
+      df2 <- df_out() %>% as.data.frame()
+      rownames(df2) <- df2$name
+      nucdf$Fraction <- df2[nucdf$cods, 'value_norm']
+      
+      p <- ggplot(nucdf, aes(x = x, y = y)) +
         # 3' big black points in the background
         geom_point(data = NULL, x = 0.5, y= 3.4, size = s_f_d() * 20, color = 'black', shape = 16) + 
         geom_point(data = NULL, x = 48.5, y= 3.4, size = s_f_d() * 20, color = 'black', shape = 16) +
         geom_point(data = NULL, x = 96.5, y= 3.4, size = s_f_d() * 20, color = 'black', shape = 16) +
-        geom_point(data = NULL, x = 144.5, y= 3.4, size = s_f_d() * 20, color = 'black', shape = 16) +
+        geom_point(data = NULL, x = 144.5, y= 3.4, size = s_f_d() * 20, color = 'black', shape = 16)
         
         # AA tiles are the outermost ring
-        geom_tile(data = nucdf[129:192,], aes(y = y + 0.24, height = h + 0.3, fill = aa), color = 'transparent', size = 0, show.legend = FALSE) +
+        if (input$byaa == 'AA property') {
+          p <- p +
+            geom_tile(data = nucdf[129:192,], aes(y = y + 0.24, height = h + 0.3, fill = aa), color = 'transparent', size = 0, show.legend = FALSE)
+        } else {
+          p <- p + 
+            geom_tile(data = nucdf[129:192,], aes(y = y + 0.24, height = h + 0.3, fill = Fraction), color = 'transparent', size = 0, show.legend = T) +
+            # scale_fill_gradient2(low = 'red', mid = 'white', high = 'white', midpoint = 0.25) +
+            scale_fill_gradientn(colours = c('red', '#FFC46B', '#FFF0D9', '#FFF8ED', rep('white', 6))) +
+            new_scale_fill()
+        }
+      p +
         geom_vline(xintercept = c(2,4,8,10,12,14,15,16,20,24,26,28,32,35,36,40,42,44,46,48,52,56,58,60,64,66,68,72,74,76,78,79,80,84,88,90,92,96,99,100,104,106,108,110,
                                   112,116,120,122,124,128,130,132,136,138,140,142,143,144,148,152,154,156,160,163,164,168,170,172,174,176,180,184,186,188,192) + 0.5,
                    linetype = 1, size = 0.3, color = "black") +
@@ -235,18 +249,22 @@ server <- function(input, output, session) {
                                      'Phe'="grey55",'Leu'="grey70",'Ser'="green",'Tyr'="#ADBDAC",'STP'="white",
                                      'Cys'="#F4FC9F",'Trp'="grey50",'Pro'="grey70",'His'="#7759EB",'Gln'="#BEFFB2",
                                      'Arg'="blue",'Ile'="grey70",'Met'="#D4D6B4",'Thr'="#81FF6B",'Asn'="#95FF82",
-                                     'Lys'="#5F57FF",'Val'="grey80",'Ala'="grey88",'Asp'="#FF5454",'Glu'="red",'Gly'="grey95")) +
+                                     'Lys'="#5F57FF",'Val'="grey80",'Ala'="grey88",'Asp'="#FF5454",'Glu'="red",'Gly'="grey95"),
+                          guide = 'none') +
         
         scale_color_manual(values = c("A" = input$g, "T" = input$h, "C" = input$i, "G" = input$j,
                                       "A1" = '#B97FFF', "T1" = '#FF75BC', "C1" = '#6BA9FF', "G1" = '#90FF8A',
-                                      "A2" = '#D3ADFF', "T2" = '#FFADD6', "C2" = '#9CC5FF', "G2" = '#C0FFBD')) +
+                                      "A2" = '#D3ADFF', "T2" = '#FFADD6', "C2" = '#9CC5FF', "G2" = '#C0FFBD'),
+                           guide = 'none') +
+        
+        # theme options
         theme(axis.ticks = element_blank(), axis.text = element_blank(),
-              axis.title.y = element_blank(), axis.title.x = element_blank(),
-              panel.border = element_blank(), panel.grid.major = element_blank(),
-              rect = element_rect(fill = "transparent"),
-              panel.background = element_rect(fill = "transparent",colour = NA),
-              plot.background = element_rect(fill = "transparent",colour = NA),
-              plot.margin = margin(s_f_d() * -1.8,s_f_d() * -1.8,s_f_d() * -1.8,s_f_d() * -1.8, "cm"))
+                axis.title.y = element_blank(), axis.title.x = element_blank(),
+                panel.border = element_blank(), panel.grid.major = element_blank(),
+                rect = element_rect(fill = "transparent"),legend.position = 'bottom',
+                panel.background = element_rect(fill = "transparent",colour = NA),
+                plot.background = element_rect(fill = "transparent",colour = NA),
+                plot.margin = margin(s_f_d() * -1.8,s_f_d() * -1.8,s_f_d() * -1.8,s_f_d() * -1.8, "cm"))
     }
   }, bg="transparent")
   
