@@ -36,7 +36,7 @@ nucdf$aa <- rep(unname(gcode[codons]),3)
 
 server <- function(input, output, session) {
   if (!all(file.exists('Codon_usage_of_all_refseq_species.csv'), file.exists('Codon_usage_of_important_refseq_species.csv'))) {
-    cat('Processed data base not found, creating files...')
+    cat(file=stderr(),'Processed data base not found, creating files...')
     # read the file with codon usage from all species, downloaded from https://dnahive.fda.gov/dna.cgi?cmd=codon_usage&id=537&mode=cocoputs
     df <- read_tsv('o537-Refseq_species.tsv', show_col_types = FALSE) %>%as.data.frame()
     
@@ -51,10 +51,10 @@ server <- function(input, output, session) {
     
     # write output
     write_csv(df, 'Codon_usage_of_all_refseq_species.csv', col_names = TRUE)
-    cat('Wrote all species')
+    cat(file=stderr(),'Wrote all species')
     write_csv(df[df$Taxid %in% sort(83333, 9606, 4922, 4932, 10090, 10117,3702, 6239, 7227, 7955,8355),],
               'Codon_usage_of_important_refseq_species.csv', col_names = TRUE)
-    cat('Wrote important species')
+    cat(file=stderr(),'Wrote important species')
     df_imp <- df
   } else {
     df_imp <- read_csv('Codon_usage_of_important_refseq_species.csv', col_names = TRUE, show_col_types = FALSE)
