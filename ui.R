@@ -3,6 +3,7 @@ library(shiny)
 library(DT)
 library(colourpicker)
 library(geomtextpath)
+library(colorspace)
 library(shinyWidgets)
 library(ggnewscale)
 
@@ -32,8 +33,16 @@ ui <- fluidPage(
         column(3, colourInput('i','Color C', value = '#2B87FF', closeOnClick = TRUE)),
         column(3, colourInput('j','Color G', value = '#5FFF54', closeOnClick = TRUE))
       ),
-      radioGroupButtons('byaa', 'Color amino acid by', status = 'primary',
-                        choices = c('AA property', 'Codon Frequency'), selected = 'AA property'),
+      fluidRow(
+        column(9,
+               radioGroupButtons('byaa', 'Color amino acid by', status = 'primary',
+                                 choices = c('AA property', 'Codon Frequency'), selected = 'AA property'),
+        ),
+        column(3, 
+               fluidRow(HTML('<div style="line-height:1.5; margin-bottom:4px;"><strong>Highlight AA</strong></div>')),
+               fluidRow(textInput('highlight', NULL, width = '90%', placeholder = 'e.g. KR'))
+        )
+      ),
       plotOutput('plotsun', height = '60vh')
     ),
     mainPanel(

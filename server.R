@@ -5,13 +5,13 @@ cust_rang <- function(x) {
   }
   round(out,0)
 }
-gcode <- c("F", "F", "L", "L", "S", "S", "S", "S", "Y", "Y",
+gcode1 <- c("F", "F", "L", "L", "S", "S", "S", "S", "Y", "Y",
            "*", "*", "C", "C", "*", "W", "L", "L", "L", "L", "P", "P", "P",
            "P", "H", "H", "Q", "Q", "R", "R", "R", "R", "I", "I", "I", "M",
            "T", "T", "T", "T", "N", "N", "K", "K", "S", "S", "R", "R", "V",
            "V", "V", "V", "A", "A", "A", "A", "D", "D", "E", "E", "G", "G",
            "G", "G")
-gcode <- Biostrings::AMINO_ACID_CODE[gcode]
+gcode <- Biostrings::AMINO_ACID_CODE[gcode1]
 gcode[is.na(gcode)] <- 'STP' 
 names(gcode) <- c("TTT", "TTC", "TTA", "TTG", "TCT", "TCC",
                   "TCA", "TCG", "TAT", "TAC", "TAA", "TAG", "TGT", "TGC", "TGA",
@@ -176,14 +176,22 @@ server <- function(input, output, session) {
       df2 <- df_out() %>% as.data.frame()
       rownames(df2) <- df2$name
       nucdf$Fraction <- df2[nucdf$cods, 'value_norm']
-      
+
       p <- ggplot(nucdf, aes(x = x, y = y)) +
         # 3' big black points in the background
         geom_point(data = NULL, x = 0.5, y= 3.4, size = s_f_d() * 20, color = 'black', shape = 16) + 
         geom_point(data = NULL, x = 48.5, y= 3.4, size = s_f_d() * 20, color = 'black', shape = 16) +
         geom_point(data = NULL, x = 96.5, y= 3.4, size = s_f_d() * 20, color = 'black', shape = 16) +
-        geom_point(data = NULL, x = 144.5, y= 3.4, size = s_f_d() * 20, color = 'black', shape = 16)
-        
+        geom_point(data = NULL, x = 144.5, y= 3.4, size = s_f_d() * 20, color = 'black', shape = 16) +
+        geom_tile(data = nucdf[129:192,], aes(y = y + 0.24, height = h + 0.3), color = 'transparent', size = 0, show.legend = FALSE) +
+        new_scale_fill()
+      
+      if (input$highlight != '') {
+        p <- p +
+          geom_tile(data = nucdf[which(gcode1 %in% str_split(toupper(input$highlight), '')[[1]]) + 128,],
+                    aes(y = y + 0.34, height = h + 0.3), fill = 'black',
+                    color = 'black', size = 2.5, show.legend = FALSE) 
+      }      
         # AA tiles are the outermost ring
         if (input$byaa == 'AA property') {
           p <- p +
@@ -191,10 +199,10 @@ server <- function(input, output, session) {
         } else {
           p <- p + 
             geom_tile(data = nucdf[129:192,], aes(y = y + 0.24, height = h + 0.3, fill = Fraction), color = 'transparent', size = 0, show.legend = T) +
-            # scale_fill_gradient2(low = 'red', mid = 'white', high = 'white', midpoint = 0.25) +
             scale_fill_gradientn(colours = c('red', '#FFC46B', '#FFF0D9', '#FFF8ED', rep('white', 6))) +
             new_scale_fill()
         }
+
       p +
         geom_vline(xintercept = c(2,4,8,10,12,14,15,16,20,24,26,28,32,35,36,40,42,44,46,48,52,56,58,60,64,66,68,72,74,76,78,79,80,84,88,90,92,96,99,100,104,106,108,110,
                                   112,116,120,122,124,128,130,132,136,138,140,142,143,144,148,152,154,156,160,163,164,168,170,172,174,176,180,184,186,188,192) + 0.5,
@@ -219,19 +227,19 @@ server <- function(input, output, session) {
                    linetype = 1, size = 0.3, color = "black", alpha =0.06) +
         
         # border around amino acid ring
-        geom_hline(yintercept = c(3,3.4), size = 1, color = 'black') +
+        geom_hline(yintercept = c(3,3.4), size = 0.5, color = 'black') +
         
         # amino acid radial text
-        geom_textvline(aes(xintercept = as.numeric(x)), label = rep(unname(gcode[codons]),3), hjust = 0.975 + (s_f_d() * 0.02),
+        geom_textvline(aes(xintercept = as.numeric(x)), label = rep(unname(gcode[codons]),3), hjust = 0.955 + (s_f_d() * 0.02),
                        linetype = 0, color = "black", family = 'mono', fontface = 'bold', size = 4 * s_f_d()) +
         
         # 5' big black point, and label 5' and 3' points
-        geom_point(data = NULL, x = 0, y= -1, size = s_f_d() * 20, color = 'black') +
+        geom_point(data = NULL, x = 0, y= -0.8, size = s_f_d() * 20, color = 'black') +
         geom_text(data = NULL, aes(label = "3'"), x = 0.5, y= 3.4, size = s_f_d() * 6, color = 'white', vjust = -0.3) + 
         geom_text(data = NULL, aes(label = "3'"), x = 48.5, y= 3.4, size = s_f_d() * 6, color = 'white', hjust = 1.3) + 
         geom_text(data = NULL, aes(label = "3'"), x = 96.5, y= 3.4, size = s_f_d() * 6, color = 'white', vjust = 1.3) + 
         geom_text(data = NULL, aes(label = "3'"), x = 144.5, y= 3.4, size = s_f_d() * 6, color = 'white', hjust = -0.3) + 
-        geom_text(data = NULL, x = 0, y= -1, label = "5'",  size = s_f_d() * 8, color = 'white') +
+        geom_text(data = NULL, x = 0, y= -0.8, label = "5'",  size = s_f_d() * 8, color = 'white') +
         
         # labels for the nuc rings
         geom_text(data = nucdf[129:192,], mapping = aes(label = nuc), size = s_f_d() * 6, fontface = 'bold') +
@@ -239,13 +247,13 @@ server <- function(input, output, session) {
         geom_text(data = nucdf[c(8,24,40,56),], mapping = aes(y= y, label = nuc), size = s_f_d() * 22, fontface = 'bold') +
         
         # axis
-        coord_polar() +
-        scale_y_continuous(limits = c(-1, 3.4)) +
+        coord_polar(clip = 'off') +
+        scale_y_continuous(limits = c(-1, 3.5)) +
         
         # colors
         scale_fill_manual(values = c("A" = input$g, "T" = input$h, "C" = input$i, "G" = input$j,
-                                     "A1" = '#B97FFF', "T1" = '#FF75BC', "C1" = '#6BA9FF', "G1" = '#90FF8A',
-                                     "A2" = '#D3ADFF', "T2" = '#FFADD6', "C2" = '#9CC5FF', "G2" = '#C0FFBD',
+                                     "A1" = lighten(input$g, 0.4), "T1" = lighten(input$h, 0.4), "C1" = lighten(input$i, 0.4), "G1" = lighten(input$j, 0.4),
+                                     "A2" = lighten(input$g, 0.7), "T2" = lighten(input$h, 0.64), "C2" = lighten(input$i, 0.64), "G2" = lighten(input$j, 0.64),
                                      'Phe'="grey55",'Leu'="grey70",'Ser'="green",'Tyr'="#ADBDAC",'STP'="white",
                                      'Cys'="#F4FC9F",'Trp'="grey50",'Pro'="grey70",'His'="#7759EB",'Gln'="#BEFFB2",
                                      'Arg'="blue",'Ile'="grey70",'Met'="#D4D6B4",'Thr'="#81FF6B",'Asn'="#95FF82",
@@ -253,9 +261,9 @@ server <- function(input, output, session) {
                           guide = 'none') +
         
         scale_color_manual(values = c("A" = input$g, "T" = input$h, "C" = input$i, "G" = input$j,
-                                      "A1" = '#B97FFF', "T1" = '#FF75BC', "C1" = '#6BA9FF', "G1" = '#90FF8A',
-                                      "A2" = '#D3ADFF', "T2" = '#FFADD6', "C2" = '#9CC5FF', "G2" = '#C0FFBD'),
-                           guide = 'none') +
+                                      "A1" = lighten(input$g, 0.4), "T1" = lighten(input$h, 0.4), "C1" = lighten(input$i, 0.4), "G1" = lighten(input$j, 0.4),
+                                      "A2" = lighten(input$g, 0.7), "T2" = lighten(input$h, 0.64), "C2" = lighten(input$i, 0.64), "G2" = lighten(input$j, 0.64)),
+                                      guide = 'none') +
         
         # theme options
         theme(axis.ticks = element_blank(), axis.text = element_blank(),
