@@ -191,8 +191,8 @@ server <- function(input, output, session) {
       if (input$highlight != '') {
         p <- p +
           geom_tile(data = nucdf[which(gcode1 %in% str_split(toupper(input$highlight), '')[[1]]) + 128,],
-                    aes(y = y + 0.34, height = h + 0.3), fill = 'black',
-                    color = 'black', size = 2.5, show.legend = FALSE) 
+                    aes(y = y + 6, height = h + 2), fill = 'black',
+                    color = 'black', size = 2, show.legend = FALSE) 
       }      
         # AA tiles are the outermost ring
         if (input$byaa == 'AA property') {
@@ -206,8 +206,7 @@ server <- function(input, output, session) {
         }
 
       p +
-        geom_vline(xintercept = c(2,4,8,10,12,14,15,16,20,24,26,28,32,35,36,40,42,44,46,48,52,56,58,60,64,66,68,72,74,76,78,79,80,84,88,90,92,96,99,100,104,106,108,110,
-                                  112,116,120,122,124,128,130,132,136,138,140,142,143,144,148,152,154,156,160,163,164,168,170,172,174,176,180,184,186,188,192) + 0.5,
+        geom_vline(xintercept = c(2,4,8,10,12,14,15,16,20,24,26,28,32,35,36,40,42,44,46,48,52,56,58,60,64) + 0.5,
                    linetype = 1, size = 0.3, color = "black") +
         
         # first Nuc tiles are the outer ring
@@ -224,15 +223,14 @@ server <- function(input, output, session) {
         geom_vline(xintercept = c(0.5, 16.5, 32.5, 48.5), linetype = 1, size = 1.4, color = "black") +
 
         # thin line to separate same amino acids across the entire chart
-        geom_vline(xintercept = c(2,4,8,10,12,14,15,16,20,24,26,28,32,35,36,40,42,44,46,48,52,56,58,60,64,66,68,72,74,76,78,79,80,84,88,90,92,96,99,100,104,106,108,110,
-                                  112,116,120,122,124,128,130,132,136,138,140,142,143,144,148,152,154,156,160,163,164,168,170,172,174,176,180,184,186,188,192) + 0.5,
+        geom_vline(xintercept = c(2,4,8,10,12,14,15,16,20,24,26,28,32,35,36,40,42,44,46,48,52,56,58,60,64) + 0.5,
                    linetype = 1, size = 0.3, color = "black", alpha =0.06) +
-
+        
         # border around amino acid ring
         geom_hline(yintercept = c(3,63.5), size = 0.5, color = 'black') +
 
         # amino acid radial text
-        geom_textvline(aes(xintercept = as.numeric(x)), label = rep(unname(gcode[codons]),3), hjust = 0.95 + (s_f_d() * 0.02),
+        geom_textvline(aes(xintercept = as.numeric(x)), label = rep(unname(gcode[codons]),3), hjust = 0.95 + (s_f_d() * 0.03),
                        linetype = 0, color = "black", family = 'mono', fontface = 'bold', size = 4 * s_f_d()) +
 
         # 5' big black point, and label 5' and 3' points
