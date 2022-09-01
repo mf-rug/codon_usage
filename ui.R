@@ -36,14 +36,18 @@ ui <- fluidPage(
       fluidRow(
         column(9,
                radioGroupButtons('byaa', 'Color amino acid by', status = 'primary',
-                                 choices = c('AA property', 'Codon Frequency'), selected = 'AA property'),
+                                 choices = c('AA property', 'Codon Frequency'), selected = 'AA property')
         ),
         column(3, 
                fluidRow(HTML('<div style="line-height:1.5; margin-bottom:4px;"><strong>Highlight AA</strong></div>')),
                fluidRow(textInput('highlight', NULL, width = '90%', placeholder = 'e.g. KR'))
         )
       ),
-      plotOutput('plotsun', height = '60vh')
+      plotOutput('plotsun', height = '60vh', hover = hoverOpts(id ="plot_hover")),
+      fluidRow(
+        column(width = 5,
+               verbatimTextOutput("hover_info")
+        ))
     ),
     mainPanel(
       width = 8,
@@ -67,7 +71,7 @@ ui <- fluidPage(
                      class = "glyphicon glyphicon-info-sign",
                      style = "color:#0072B2;",
                      title = 'Data from https://dnahive.fda.gov/dna.cgi?cmd=codon_usage&id=537&mode=cocoputs'
-                   ),
+                   )
                  )
           )),
       HTML('<hr style="margin: 3px 0 10px" />'),
@@ -77,7 +81,7 @@ ui <- fluidPage(
           materialSwitch('by_aa', HTML('AA-wise&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp'), value = TRUE, status = 'primary', right = TRUE, width = '100%')),
       div(style="display: inline-block;vertical-align:top",
           materialSwitch('norm', 'normalised for each AA', value = TRUE, status = 'primary', right = TRUE)),
-      plotOutput('plot', ),
+      plotOutput('plot'),
       HTML('<hr style="margin-bottom: 3px" />'),
       fluidRow(column(12,HTML('<strong>Table</strong>'))), br(),
       DTOutput('table')

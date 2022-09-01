@@ -26,9 +26,9 @@ snuc = c(as.vector(sapply(nuc, rep, 16)),
          rep(as.vector(sapply(nuc, rep, 4)), 4),
          rep(nuc, 16))
 codons <- apply(matrix(snuc, ncol = 3), 1, function(i) paste(i, collapse = ""))
-nucdf <- data.frame(x = as.factor(rep(1L:64, 3)),
-                    y = c(rep(0.2, 64), rep(1.8, 64), rep(2.7, 64)),
-                    h = c(rep(2, 64), rep(1.2, 64), rep(0.6, 64)))
+nucdf <- data.frame(x = rep(1:64, 3),
+                    y = c(rep(16, 64), rep(40, 64), rep(53, 64)),
+                    h = c(rep(32, 64), rep(19, 64), rep(8, 64)))
 nucdf$nuc <- snuc
 nucdf$nuc2 <- paste0(nucdf$nuc, '1')
 nucdf$nuc3 <- paste0(nucdf$nuc, '2')
@@ -145,7 +145,6 @@ server <- function(input, output, session) {
         geom_col(aes(fill =aa), 
                  show.legend = FALSE) +
         xlab('Codon') +
-        # scale_fill_manual(values = unname(pals::polychrome())) +
         theme_bw() +
         theme(axis.title = element_text(size = s_f_d() * 19, face = "bold"),
               axis.text = element_text(size = s_f_d() * 16),
@@ -176,13 +175,16 @@ server <- function(input, output, session) {
       df2 <- df_out() %>% as.data.frame()
       rownames(df2) <- df2$name
       nucdf$Fraction <- df2[nucdf$cods, 'value_norm']
-
+      
+      # nucdf$y <- scales::rescale(nucdf$y, to = c(0,64), from = c(-1, 3.5))
+      # nucdf$h <- scales::rescale(nucdf$h, to = c(0,64), from = c(-1, 3.5)) /1.8
+      
       p <- ggplot(nucdf, aes(x = x, y = y)) +
         # 3' big black points in the background
-        geom_point(data = NULL, x = 0.5, y= 3.4, size = s_f_d() * 20, color = 'black', shape = 16) + 
-        geom_point(data = NULL, x = 48.5, y= 3.4, size = s_f_d() * 20, color = 'black', shape = 16) +
-        geom_point(data = NULL, x = 96.5, y= 3.4, size = s_f_d() * 20, color = 'black', shape = 16) +
-        geom_point(data = NULL, x = 144.5, y= 3.4, size = s_f_d() * 20, color = 'black', shape = 16) +
+        geom_point(data = NULL, x = 0.5, y= 63, size = s_f_d() * 20, color = 'black', shape = 16) + 
+        geom_point(data = NULL, x = 48.5, y= 63, size = s_f_d() * 20, color = 'black', shape = 16) +
+        geom_point(data = NULL, x = 96.5, y= 63, size = s_f_d() * 20, color = 'black', shape = 16) +
+        geom_point(data = NULL, x = 144.5, y= 63, size = s_f_d() * 20, color = 'black', shape = 16) +
         geom_tile(data = nucdf[129:192,], aes(y = y + 0.24, height = h + 0.3), color = 'transparent', size = 0, show.legend = FALSE) +
         new_scale_fill()
       
@@ -195,10 +197,10 @@ server <- function(input, output, session) {
         # AA tiles are the outermost ring
         if (input$byaa == 'AA property') {
           p <- p +
-            geom_tile(data = nucdf[129:192,], aes(y = y + 0.24, height = h + 0.3, fill = aa), color = 'transparent', size = 0, show.legend = FALSE)
+            geom_tile(data = nucdf[129:192,], aes(y = y + 6, height = h + 1, fill = aa), color = 'transparent', size = 0, show.legend = FALSE)
         } else {
           p <- p + 
-            geom_tile(data = nucdf[129:192,], aes(y = y + 0.24, height = h + 0.3, fill = Fraction), color = 'transparent', size = 0, show.legend = T) +
+            geom_tile(data = nucdf[129:192,], aes(y = y + 6, height = h + 1, fill = Fraction), color = 'transparent', size = 0, show.legend = T) +
             scale_fill_gradientn(colours = c('red', '#FFC46B', '#FFF0D9', '#FFF8ED', rep('white', 6))) +
             new_scale_fill()
         }
@@ -211,44 +213,45 @@ server <- function(input, output, session) {
         # first Nuc tiles are the outer ring
         geom_tile(data = nucdf[129:192,], aes(height = h, fill = nuc3), color = 'black', size = 0.5, show.legend = FALSE) +
         geom_vline(xintercept = seq(4,64, 4) + 0.5, linetype = 1, size = 1.1, color = "black") +
-        
-        
+
+
         # second tiles are the middle ring
         geom_tile(data = nucdf[65:128,], aes(height = h, fill = nuc2, color = nuc2), size = 1,  show.legend = FALSE) +
         geom_vline(xintercept = seq(4,66, 4) + 0.5,linetype = 1, size = 1.1, color = "black") +
-        
+
         # third tiles are the inner ring
         geom_tile(data = nucdf[1:64,], aes(height = h, fill = nuc, color = nuc), size = 1, show.legend = FALSE) +
-        geom_vline(xintercept = c(0.5, 96.5, 48.5, 144.5), linetype = 1, size = 1.4, color = "black") +
-        
+        geom_vline(xintercept = c(0.5, 16.5, 32.5, 48.5), linetype = 1, size = 1.4, color = "black") +
+
         # thin line to separate same amino acids across the entire chart
         geom_vline(xintercept = c(2,4,8,10,12,14,15,16,20,24,26,28,32,35,36,40,42,44,46,48,52,56,58,60,64,66,68,72,74,76,78,79,80,84,88,90,92,96,99,100,104,106,108,110,
-                                  112,116,120,122,124,128,130,132,136,138,140,142,143,144,148,152,154,156,160,163,164,168,170,172,174,176,180,184,186,188,192) + 0.5, 
+                                  112,116,120,122,124,128,130,132,136,138,140,142,143,144,148,152,154,156,160,163,164,168,170,172,174,176,180,184,186,188,192) + 0.5,
                    linetype = 1, size = 0.3, color = "black", alpha =0.06) +
-        
+
         # border around amino acid ring
-        geom_hline(yintercept = c(3,3.4), size = 0.5, color = 'black') +
-        
+        geom_hline(yintercept = c(3,63.5), size = 0.5, color = 'black') +
+
         # amino acid radial text
-        geom_textvline(aes(xintercept = as.numeric(x)), label = rep(unname(gcode[codons]),3), hjust = 0.955 + (s_f_d() * 0.02),
+        geom_textvline(aes(xintercept = as.numeric(x)), label = rep(unname(gcode[codons]),3), hjust = 0.95 + (s_f_d() * 0.02),
                        linetype = 0, color = "black", family = 'mono', fontface = 'bold', size = 4 * s_f_d()) +
-        
+
         # 5' big black point, and label 5' and 3' points
-        geom_point(data = NULL, x = 0, y= -0.8, size = s_f_d() * 20, color = 'black') +
-        geom_text(data = NULL, aes(label = "3'"), x = 0.5, y= 3.4, size = s_f_d() * 6, color = 'white', vjust = -0.3) + 
-        geom_text(data = NULL, aes(label = "3'"), x = 48.5, y= 3.4, size = s_f_d() * 6, color = 'white', hjust = 1.3) + 
-        geom_text(data = NULL, aes(label = "3'"), x = 96.5, y= 3.4, size = s_f_d() * 6, color = 'white', vjust = 1.3) + 
-        geom_text(data = NULL, aes(label = "3'"), x = 144.5, y= 3.4, size = s_f_d() * 6, color = 'white', hjust = -0.3) + 
-        geom_text(data = NULL, x = 0, y= -0.8, label = "5'",  size = s_f_d() * 8, color = 'white') +
-        
+        geom_point(data = NULL, x = 0, y= -1, size = s_f_d() * 20, color = 'black') +
+        geom_text(data = NULL, aes(label = "3'"), x = 0.5, y= 63, size = s_f_d() * 6, color = 'white', vjust = -0.3) +
+        geom_text(data = NULL, aes(label = "3'"), x = 48.5, y= 63, size = s_f_d() * 6, color = 'white', hjust = 1.3) +
+        geom_text(data = NULL, aes(label = "3'"), x = 96.5, y= 63, size = s_f_d() * 6, color = 'white', vjust = 1.3) +
+        geom_text(data = NULL, aes(label = "3'"), x = 144.5, y= 63, size = s_f_d() * 6, color = 'white', hjust = -0.3) +
+        geom_text(data = NULL, x = 0, y= -1, label = "5'",  size = s_f_d() * 8, color = 'white') +
+
         # labels for the nuc rings
         geom_text(data = nucdf[129:192,], mapping = aes(label = nuc), size = s_f_d() * 6, fontface = 'bold') +
         geom_text(data = nucdf[seq(66, 126,length.out = 16),], mapping = aes(y= y, label = nuc), size = s_f_d() * 15, fontface = 'bold') +
         geom_text(data = nucdf[c(8,24,40,56),], mapping = aes(y= y, label = nuc), size = s_f_d() * 22, fontface = 'bold') +
-        
+
         # axis
         coord_polar(clip = 'off') +
-        scale_y_continuous(limits = c(-1, 3.5)) +
+        scale_y_continuous(limits = c(0, 64)) +
+        scale_x_continuous(limits = c(0.5, 64.5)) +
         
         # colors
         scale_fill_manual(values = c("A" = input$g, "T" = input$h, "C" = input$i, "G" = input$j,
@@ -275,5 +278,26 @@ server <- function(input, output, session) {
                 plot.margin = margin(s_f_d() * -1.8,s_f_d() * -1.8,s_f_d() * -1.8,s_f_d() * -1.8, "cm"))
     }
   }, bg="transparent")
+  
+  # output$hover_info <- renderPrint({
+  #   if(!is.null(input$plot_hover)){
+  #     # points are within circle according to (x - center_x)² + (y - center_y)² < radius²
+  #     # radius = 64 / 2 = 32 ; 
+  #     # dist = sqrt((center_x - x) ** 2 + (center_y - y) ** 2))
+  #     # dist = sqrt((32 - x) ** 2 + ()
+  #     
+  #     print(1)
+  #     
+  #     hover=input$plot_hover
+  #     dist <- hover$x - as.numeric(nucdf$x)
+  #     cat(hover$x, '\n')
+  #     cat(nucdf$x, '\n')
+  #     cat(hover$x - as.numeric(nucdf$x), '\n')
+  #     if(min(dist) < 3)
+  #       nucdf$aa[which.min(dist)]
+  #   } else {
+  #     cat('test')
+  #   }
+  # })
   
 }
