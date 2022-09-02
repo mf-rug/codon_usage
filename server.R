@@ -5,6 +5,8 @@ cust_rang <- function(x) {
   }
   round(out,0)
 }
+aa_1_to_full <- c('alanine', 'arginine', 'aspargine', 'aspartic_acid', 'cysteine', 'glutamine', 'glutamic_acid', 'glycine', 'histidine', 'isoleucine', 'leucine', 'lysine', 'methionine', 'phenylalanine', 'proline', 'serine', 'threonine', 'tryptophan', 'tyrosine', 'valine')
+names(aa_1_to_full) <- Biostrings::AMINO_ACID_CODE[1:20]
 gcode1 <- c("F", "F", "L", "L", "S", "S", "S", "S", "Y", "Y",
            "*", "*", "C", "C", "*", "W", "L", "L", "L", "L", "P", "P", "P",
            "P", "H", "H", "Q", "Q", "R", "R", "R", "R", "I", "I", "I", "M",
@@ -224,7 +226,7 @@ server <- function(input, output, session) {
 
         # thin line to separate same amino acids across the entire chart
         geom_vline(xintercept = c(2,4,8,10,12,14,15,16,20,24,26,28,32,35,36,40,42,44,46,48,52,56,58,60,64) + 0.5,
-                   linetype = 1, size = 0.3, color = "black", alpha =0.06) +
+                   linetype = 1, size = 0.3, color = "black", alpha =0.16) +
         
         # border around amino acid ring
         geom_hline(yintercept = c(3,63.5), size = 0.5, color = 'black') +
@@ -243,8 +245,8 @@ server <- function(input, output, session) {
 
         # labels for the nuc rings
         geom_text(data = nucdf[129:192,], mapping = aes(label = nuc), size = s_f_d() * 6, fontface = 'bold') +
-        geom_text(data = nucdf[seq(66, 126,length.out = 16),], mapping = aes(y= y, label = nuc), size = s_f_d() * 15, fontface = 'bold') +
-        geom_text(data = nucdf[c(8,24,40,56),], mapping = aes(y= y, label = nuc), size = s_f_d() * 22, fontface = 'bold') +
+        geom_text(data = nucdf[seq(66, 126,length.out = 16),], mapping = aes(x = x +0.5, y= y, label = nuc), size = s_f_d() * 15, fontface = 'bold') +
+        geom_text(data = nucdf[c(8,24,40,56),], mapping = aes(x = x +0.5, y= y, label = nuc), size = s_f_d() * 22, fontface = 'bold') +
 
         # axis
         coord_polar(clip = 'off') +
@@ -273,29 +275,67 @@ server <- function(input, output, session) {
                 rect = element_rect(fill = "transparent"),legend.position = 'bottom',
                 panel.background = element_rect(fill = "transparent",colour = NA),
                 plot.background = element_rect(fill = "transparent",colour = NA),
-                plot.margin = margin(s_f_d() * -1.8,s_f_d() * -1.8,s_f_d() * -1.8,s_f_d() * -1.8, "cm"))
+                plot.margin = margin(s_f_d() * -1,s_f_d() * -1,s_f_d() * -1,s_f_d() * -1, "cm"))
     }
   }, bg="transparent")
   
-  # output$hover_info <- renderPrint({
-  #   if(!is.null(input$plot_hover)){
-  #     # points are within circle according to (x - center_x)² + (y - center_y)² < radius²
-  #     # radius = 64 / 2 = 32 ; 
-  #     # dist = sqrt((center_x - x) ** 2 + (center_y - y) ** 2))
-  #     # dist = sqrt((32 - x) ** 2 + ()
-  #     
-  #     print(1)
-  #     
-  #     hover=input$plot_hover
-  #     dist <- hover$x - as.numeric(nucdf$x)
-  #     cat(hover$x, '\n')
-  #     cat(nucdf$x, '\n')
-  #     cat(hover$x - as.numeric(nucdf$x), '\n')
-  #     if(min(dist) < 3)
-  #       nucdf$aa[which.min(dist)]
-  #   } else {
-  #     cat('test')
-  #   }
-  # })
-  
+  hover_out <- reactive({
+    if (!is.null(input$plot_hover)) {
+      
+      hover=input$plot_hover
+      
+      x_center <- 27.88813
+      y_center <- 36.692845
+      
+      c <- c(x_center, y_center)
+      a <- c(x_center, 64) - c
+      b <- c(hover$x, hover$y) - c
+      
+      ang <- acos(sum(a*b) / (sqrt(sum(a * a)) * sqrt(sum(b * b))))
+      if (hover$x > x_center) {
+        ang <- as.numeric(set_units(as_units(ang, "radians"), "degrees"))
+      } else {
+        ang <- 360 - as.numeric(set_units(as_units(ang, "radians"), "degrees"))
+      }
+      x_coord <- (ang / 360) * 64
+      aa <- nucdf[round(128.5 + x_coord), 'aa']
+      if (aa == "STP") {
+        aa <- 'none'
+      } else {
+        aa <- aa_1_to_full[aa]
+      }
+      
+      # points are within circle according to (x - center_x)² + (y - center_y)² < radius²
+      # radius = 64 / 2 = 32 ;
+      dist = sqrt(((x_center - hover$x) ** 2) + ((y_center - hover$y) ** 2))
+      list(dist,aa)
+    }
+  })
+  output$hover_text <- renderUI({ 
+    dist <- hover_out()[[1]]
+    aa <- hover_out()[[2]]
+    if (!is.null(input$plot_hover) && dist < 26 && dist > 22 && aa != 'none') {
+     HTML(paste0('<strong><big>', aa, '</strong></big><br><br>'))
+    }
+  })
+    
+  output$hover_info <- renderImage({
+    out <- list(
+      src = paste0('www/none.png'),
+      height = '50%'
+    )
+    if (!is.null(input$plot_hover)) {
+      dist <- hover_out()[[1]]
+      aa <- hover_out()[[2]]
+      if (dist < 26 && dist > 22) {
+        # images taken from https://github.com/jeromlu/amino_acids_repo/tree/93cf469f9064a7bc93886bf0aa4da8d6a1b0675a/amino_acids/resources/amino_acid_pictures
+        out <- list(
+          src = paste0('www/', aa, '.png'),
+          alt = aa,
+          height = '50%'
+        )
+      }
+    }
+    out
+  }, deleteFile = FALSE)
 }

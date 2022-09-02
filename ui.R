@@ -13,7 +13,7 @@ ui <- fluidPage(
   sidebarLayout(
     position = 'right',
     sidebarPanel(
-      width = 4,
+      width = 4, style = "overflow-y:scroll; max-height: 100%; position:relative;",
       tags$head(tags$script('var dimension = [0, 0];
                                 $(document).on("shiny:connected", function(e) {
                                     dimension[0] = window.innerWidth;
@@ -25,29 +25,31 @@ ui <- fluidPage(
                                     dimension[1] = window.innerHeight;
                                     Shiny.onInputChange("dimension", dimension);
                                 });')),
-      fluidRow(column(12, HTML('<h3>Genetic code sun</h3>'))), 
-      HTML('<hr style="margin: 0 0 10px" />'),
       fluidRow(
-        column(3, colourInput('g','Color A', value = '#9640FF',  closeOnClick = TRUE)),
-        column(3, colourInput('h','Color T', value = '#FF389F', closeOnClick = TRUE)),
-        column(3, colourInput('i','Color C', value = '#2B87FF', closeOnClick = TRUE)),
-        column(3, colourInput('j','Color G', value = '#5FFF54', closeOnClick = TRUE))
-      ),
-      fluidRow(
-        column(9,
+        column(6,
                radioGroupButtons('byaa', 'Color amino acid by', status = 'primary',
                                  choices = c('AA property', 'Codon Frequency'), selected = 'AA property')
         ),
         column(3, 
                fluidRow(HTML('<div style="line-height:1.5; margin-bottom:4px;"><strong>Highlight AA</strong></div>')),
                fluidRow(textInput('highlight', NULL, width = '90%', placeholder = 'e.g. KR'))
+        ),
+        column(3, align = 'right', br(),
+               dropdownButton(
+                 column(3, colourInput('g','Color A', value = '#9640FF',  closeOnClick = TRUE)),
+                 column(3, colourInput('h','Color T', value = '#FF389F', closeOnClick = TRUE)),
+                 column(3, colourInput('i','Color C', value = '#2B87FF', closeOnClick = TRUE)),
+                 column(3, colourInput('j','Color G', value = '#5FFF54', closeOnClick = TRUE)),
+                 width = '30vw', status = 'primary', label = 'Colors', icon = icon('palette'), tooltip = 'Customise genetic code sun colors', right = TRUE
+               )
         )
       ),
       plotOutput('plotsun', height = '60vh', hover = hoverOpts(id ="plot_hover")),
       fluidRow(
-        column(width = 5,
-               verbatimTextOutput("hover_info")
-        ))
+        column(width = 12, align="center",
+               htmlOutput("hover_text"),
+               imageOutput("hover_info")
+        )), br(),br(),br(),br(),br(),
     ),
     mainPanel(
       width = 8,
