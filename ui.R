@@ -6,6 +6,8 @@ library(geomtextpath)
 library(colorspace)
 library(shinyWidgets)
 library(ggnewscale)
+library(units)
+library(shinycssloaders)
 
 ui <- fluidPage(
   title = 'Codon Usage tables',
@@ -26,15 +28,15 @@ ui <- fluidPage(
                                     Shiny.onInputChange("dimension", dimension);
                                 });')),
       fluidRow(
-        column(6,
+        column(7,
                radioGroupButtons('byaa', 'Color amino acid by', status = 'primary',
-                                 choices = c('AA property', 'Codon Frequency'), selected = 'AA property')
+                                 choices = c('property', 'codon freq'), selected = 'property')
         ),
         column(3, 
                fluidRow(HTML('<div style="line-height:1.5; margin-bottom:4px;"><strong>Highlight AA</strong></div>')),
                fluidRow(textInput('highlight', NULL, width = '90%', placeholder = 'e.g. KR'))
         ),
-        column(3, align = 'right', br(),
+        column(2, align = 'right', br(),
                dropdownButton(
                  column(3, colourInput('g','Color A', value = '#9640FF',  closeOnClick = TRUE)),
                  column(3, colourInput('h','Color T', value = '#FF389F', closeOnClick = TRUE)),
@@ -44,7 +46,7 @@ ui <- fluidPage(
                )
         )
       ),
-      plotOutput('plotsun', height = '60vh', hover = hoverOpts(id ="plot_hover")),
+      withSpinner(plotOutput('plotsun', height = '60vh', hover = hoverOpts(id ="plot_hover"))),
       fluidRow(
         column(width = 12, align="center",
                htmlOutput("hover_text"),
@@ -83,7 +85,7 @@ ui <- fluidPage(
           materialSwitch('by_aa', HTML('AA-wise&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp'), value = TRUE, status = 'primary', right = TRUE, width = '100%')),
       div(style="display: inline-block;vertical-align:top",
           materialSwitch('norm', 'normalised for each AA', value = TRUE, status = 'primary', right = TRUE)),
-      plotOutput('plot'),
+      withSpinner(plotOutput('plot')),
       HTML('<hr style="margin-bottom: 3px" />'),
       fluidRow(column(12,HTML('<strong>Table</strong>'))), br(),
       DTOutput('table')

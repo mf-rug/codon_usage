@@ -197,7 +197,7 @@ server <- function(input, output, session) {
                     color = 'black', size = 2, show.legend = FALSE) 
       }      
         # AA tiles are the outermost ring
-        if (input$byaa == 'AA property') {
+        if (input$byaa == 'property') {
           p <- p +
             geom_tile(data = nucdf[129:192,], aes(y = y + 6, height = h + 1, fill = aa), color = 'transparent', size = 0, show.legend = FALSE)
         } else {
@@ -207,7 +207,7 @@ server <- function(input, output, session) {
             new_scale_fill()
         }
 
-      p +
+      p <- p +
         geom_vline(xintercept = c(2,4,8,10,12,14,15,16,20,24,26,28,32,35,36,40,42,44,46,48,52,56,58,60,64) + 0.5,
                    linetype = 1, size = 0.3, color = "black") +
         
@@ -247,12 +247,7 @@ server <- function(input, output, session) {
         geom_text(data = nucdf[129:192,], mapping = aes(label = nuc), size = s_f_d() * 6, fontface = 'bold') +
         geom_text(data = nucdf[seq(66, 126,length.out = 16),], mapping = aes(x = x +0.5, y= y, label = nuc), size = s_f_d() * 15, fontface = 'bold') +
         geom_text(data = nucdf[c(8,24,40,56),], mapping = aes(x = x +0.5, y= y, label = nuc), size = s_f_d() * 22, fontface = 'bold') +
-
-        # axis
-        coord_polar(clip = 'off') +
-        scale_y_continuous(limits = c(0, 64)) +
-        scale_x_continuous(limits = c(0.5, 64.5)) +
-        
+       
         # colors
         scale_fill_manual(values = c("A" = input$g, "T" = input$h, "C" = input$i, "G" = input$j,
                                      "A1" = lighten(input$g, 0.4), "T1" = lighten(input$h, 0.4), "C1" = lighten(input$i, 0.4), "G1" = lighten(input$j, 0.4),
@@ -270,12 +265,22 @@ server <- function(input, output, session) {
         
         # theme options
         theme(axis.ticks = element_blank(), axis.text = element_blank(),
-                axis.title.y = element_blank(), axis.title.x = element_blank(),
-                panel.border = element_blank(), panel.grid.major = element_blank(),
-                rect = element_rect(fill = "transparent"),legend.position = 'bottom',
-                panel.background = element_rect(fill = "transparent",colour = NA),
-                plot.background = element_rect(fill = "transparent",colour = NA),
-                plot.margin = margin(s_f_d() * -1,s_f_d() * -1,s_f_d() * -1,s_f_d() * -1, "cm"))
+              axis.title.y = element_blank(), axis.title.x = element_blank(),
+              panel.border = element_blank(), panel.grid.major = element_blank(),
+              rect = element_rect(fill = "transparent"), legend.position = c(0.1,0.83),
+              # legend.margin = margin(s_f_d() * -1, 0, s_f_d() * -1, 0, "cm"),
+              # legend.box.margin = margin(0, 0, s_f_d() * -1, 0, "cm"),
+              panel.background = element_rect(fill = "transparent",colour = NA),
+              plot.background = element_rect(fill = "transparent",colour = NA),
+              plot.margin = margin(s_f_d() * -1,s_f_d() * -1,s_f_d() * -1,s_f_d() * -1, "cm"))
+      
+      p <- suppressMessages(p + 
+                              # axis
+                              coord_polar(clip = 'off') +
+                              scale_y_continuous(limits = c(0, 64)) +
+                              scale_x_continuous(limits = c(0.5, 64.5))
+      )
+      p
     }
   }, bg="transparent")
   
@@ -286,7 +291,10 @@ server <- function(input, output, session) {
       
       x_center <- 27.88813
       y_center <- 36.692845
-      
+      # if (input$byaa == 'codon freq') {
+      #   y_center <- 42.4
+      # }
+
       c <- c(x_center, y_center)
       a <- c(x_center, 64) - c
       b <- c(hover$x, hover$y) - c
@@ -311,9 +319,9 @@ server <- function(input, output, session) {
       list(dist,aa)
     }
   })
-  output$hover_text <- renderUI({ 
+  output$hover_text <- renderUI({
     dist <- hover_out()[[1]]
-    aa <- hover_out()[[2]]
+    aa <- as.character(hover_out()[[2]])
     if (!is.null(input$plot_hover) && dist < 26 && dist > 22 && aa != 'none') {
      HTML(paste0('<strong><big>', aa, '</strong></big><br><br>'))
     }
@@ -322,20 +330,20 @@ server <- function(input, output, session) {
   output$hover_info <- renderImage({
     out <- list(
       src = paste0('www/none.png'),
-      height = '50%'
+      width = paste0(120 * s_f_d(),'px')
     )
-    if (!is.null(input$plot_hover)) {
+    # if (!is.null(input$plot_hover)) {
       dist <- hover_out()[[1]]
-      aa <- hover_out()[[2]]
-      if (dist < 26 && dist > 22) {
+      aa <- as.character(hover_out()[[2]])
+      if (!is.null(dist) && dist < 26 && dist > 22) {
         # images taken from https://github.com/jeromlu/amino_acids_repo/tree/93cf469f9064a7bc93886bf0aa4da8d6a1b0675a/amino_acids/resources/amino_acid_pictures
         out <- list(
           src = paste0('www/', aa, '.png'),
           alt = aa,
-          height = '50%'
+          width = paste0(120 * s_f_d(),'px')
         )
       }
-    }
+    # }
     out
   }, deleteFile = FALSE)
 }
