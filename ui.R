@@ -28,15 +28,11 @@ ui <- fluidPage(
                                     Shiny.onInputChange("dimension", dimension);
                                 });')),
       fluidRow(
-        column(7,
-               radioGroupButtons('byaa', 'Color amino acid by', status = 'primary',
-                                 choices = c('property', 'codon freq'), selected = 'property')
+        column(5, 
+               radioGroupButtons('byaa', 'Color AA by', status = 'primary',
+                                 choices = c('type', 'codon freq'), selected = 'type')
         ),
-        column(3, 
-               fluidRow(HTML('<div style="line-height:1.5; margin-bottom:4px;"><strong>Highlight AA</strong></div>')),
-               fluidRow(textInput('highlight', NULL, width = '90%', placeholder = 'e.g. KR'))
-        ),
-        column(2, align = 'right', br(),
+        column(4, align = 'center', HTML('<div style="line-height:1.5; margin-bottom:4px;"><strong>Color bases</strong></div>'),
                dropdownButton(
                  column(3, colourInput('g','Color A', value = '#9640FF',  closeOnClick = TRUE)),
                  column(3, colourInput('h','Color T', value = '#FF389F', closeOnClick = TRUE)),
@@ -44,6 +40,10 @@ ui <- fluidPage(
                  column(3, colourInput('j','Color G', value = '#5FFF54', closeOnClick = TRUE)),
                  width = '30vw', status = 'primary', label = 'Colors', icon = icon('palette'), tooltip = 'Customise genetic code sun colors', right = TRUE
                )
+        ),
+        column(3, 
+               fluidRow(HTML('<div style="line-height:1.5; margin-bottom:4px;"><strong>Highlight AA</strong></div>')),
+               fluidRow(textInput('highlight', NULL, width = '90%', placeholder = 'e.g. KR'))
         )
       ),
       withSpinner(plotOutput('plotsun', height = '60vh', hover = hoverOpts(id ="plot_hover"))),

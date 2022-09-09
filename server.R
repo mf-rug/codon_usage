@@ -177,10 +177,9 @@ server <- function(input, output, session) {
       df2 <- df_out() %>% as.data.frame()
       rownames(df2) <- df2$name
       nucdf$Fraction <- df2[nucdf$cods, 'value_norm']
-      
-      # nucdf$y <- scales::rescale(nucdf$y, to = c(0,64), from = c(-1, 3.5))
-      # nucdf$h <- scales::rescale(nucdf$h, to = c(0,64), from = c(-1, 3.5)) /1.8
-      
+      nucdf$aacol <- 'black'
+      nucdf[nucdf$aa == 'STP', 'aacol'] <- 'white'
+
       p <- ggplot(nucdf, aes(x = x, y = y)) +
         # 3' big black points in the background
         geom_point(data = NULL, x = 0.5, y= 63, size = s_f_d() * 20, color = 'black', shape = 16) + 
@@ -197,14 +196,22 @@ server <- function(input, output, session) {
                     color = 'black', size = 2, show.legend = FALSE) 
       }      
         # AA tiles are the outermost ring
-        if (input$byaa == 'property') {
+        if (input$byaa == 'type') {
           p <- p +
-            geom_tile(data = nucdf[129:192,], aes(y = y + 6, height = h + 1, fill = aa), color = 'transparent', size = 0, show.legend = FALSE)
+            geom_tile(data = nucdf[129:192,], aes(y = y + 6, height = h + 1, fill = aa), color = 'transparent', size = 0, show.legend = FALSE) +
+            # amino acid radial text
+            geom_textvline(aes(xintercept = as.numeric(x), color = aacol), label = rep(unname(gcode[codons]),3), hjust = 0.95 + (s_f_d() * 0.03),
+                           linetype = 0, family = 'mono', fontface = 'bold', size = 4 * s_f_d()) +
+            scale_color_identity() +
+            new_scale_color()
+            
         } else {
           p <- p + 
             geom_tile(data = nucdf[129:192,], aes(y = y + 6, height = h + 1, fill = Fraction), color = 'transparent', size = 0, show.legend = T) +
-            scale_fill_gradientn(colours = c('red', '#FFC46B', '#FFF0D9', '#FFF8ED', rep('white', 6))) +
-            new_scale_fill()
+            scale_fill_gradientn(colours = c('red', '#FFC46B', '#FFF0D9', '#FFF8ED', rep('white', 10))) +
+            new_scale_fill() +
+            geom_textvline(aes(xintercept = as.numeric(x)), color = 'black', label = rep(unname(gcode[codons]),3), hjust = 0.95 + (s_f_d() * 0.03),
+                           linetype = 0, family = 'mono', fontface = 'bold', size = 4 * s_f_d()) 
         }
 
       p <- p +
@@ -231,10 +238,6 @@ server <- function(input, output, session) {
         # border around amino acid ring
         geom_hline(yintercept = c(3,63.5), size = 0.5, color = 'black') +
 
-        # amino acid radial text
-        geom_textvline(aes(xintercept = as.numeric(x)), label = rep(unname(gcode[codons]),3), hjust = 0.95 + (s_f_d() * 0.03),
-                       linetype = 0, color = "black", family = 'mono', fontface = 'bold', size = 4 * s_f_d()) +
-
         # 5' big black point, and label 5' and 3' points
         geom_point(data = NULL, x = 0, y= -1, size = s_f_d() * 20, color = 'black') +
         geom_text(data = NULL, aes(label = "3'"), x = 0.5, y= 63, size = s_f_d() * 6, color = 'white', vjust = -0.3) +
@@ -252,10 +255,10 @@ server <- function(input, output, session) {
         scale_fill_manual(values = c("A" = input$g, "T" = input$h, "C" = input$i, "G" = input$j,
                                      "A1" = lighten(input$g, 0.4), "T1" = lighten(input$h, 0.4), "C1" = lighten(input$i, 0.4), "G1" = lighten(input$j, 0.4),
                                      "A2" = lighten(input$g, 0.7), "T2" = lighten(input$h, 0.64), "C2" = lighten(input$i, 0.64), "G2" = lighten(input$j, 0.64),
-                                     'Phe'="grey55",'Leu'="grey70",'Ser'="green",'Tyr'="#ADBDAC",'STP'="white",
+                                     'Phe'="grey55",'Leu'="grey70",'Ser'="green",'Tyr'="#ADBDAC",'STP'="black",
                                      'Cys'="#F4FC9F",'Trp'="grey50",'Pro'="grey70",'His'="#7759EB",'Gln'="#BEFFB2",
                                      'Arg'="blue",'Ile'="grey70",'Met'="#D4D6B4",'Thr'="#81FF6B",'Asn'="#95FF82",
-                                     'Lys'="#5F57FF",'Val'="grey80",'Ala'="grey88",'Asp'="#FF5454",'Glu'="red",'Gly'="grey95"),
+                                     'Lys'="#5F57FF",'Val'="grey80",'Ala'="grey88",'Asp'="#ff0000",'Glu'="#ff7070",'Gly'="grey95"),
                           guide = 'none') +
         
         scale_color_manual(values = c("A" = input$g, "T" = input$h, "C" = input$i, "G" = input$j,
